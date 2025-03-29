@@ -1,0 +1,16 @@
+[project]
+name = "rl4lms"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "bert-score>=0.3.13",
+    "gem-metrics>=0.2.0",
+    "importlib-metadata>=8.6.1",
+    "six>=1.17.0",
+    "spacy>=3.8.4",
+]
+
+[tool.uv.sources]
+gem-metrics = { git = "https://github.com/omar2535/GEM-metrics" }
