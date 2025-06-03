@@ -4,7 +4,7 @@ import torch
 from typing import List, Dict, Tuple, Any
 from abc import abstractmethod
 import numpy as np
-from datasets import load_metric
+from evaluate import load
 from gem_metrics.msttr import MSTTR
 from gem_metrics.ngrams import NGramStats
 from rl4lms.envs.text_generation.caption_metrics.cider import Cider
@@ -107,7 +107,7 @@ class LearnedRewardMetric(BaseMetric):
 class MeteorMetric(BaseMetric):
     def __init__(self) -> None:
         super().__init__()
-        self._metric = load_metric("meteor")
+        self._metric = load("meteor")
 
     def compute(
         self,
@@ -130,7 +130,7 @@ class MeteorMetric(BaseMetric):
 class RougeMetric(BaseMetric):
     def __init__(self, use_single_ref: bool = True) -> None:
         super().__init__()
-        self._metric = load_metric("rouge")
+        self._metric = load("rouge")
         self._use_single_ref = use_single_ref
 
     def compute(
@@ -163,7 +163,7 @@ class RougeMetric(BaseMetric):
 class BERTScoreMetric(BaseMetric):
     def __init__(self, language: str) -> None:
         super().__init__()
-        self._metric = load_metric("bertscore")
+        self._metric = load("bertscore")
         self._language = language
         # since models are loaded heavily on cuda:0, use the last one to avoid memory
         self._last_gpu = f"cuda:{torch.cuda.device_count() - 1}"
@@ -193,7 +193,7 @@ class BERTScoreMetric(BaseMetric):
 class BLEUMetric(BaseMetric):
     def __init__(self) -> None:
         super().__init__()
-        self._metric = load_metric("bleu")
+        self._metric = load("bleu")
 
     def compute(
         self,
@@ -227,7 +227,7 @@ class BLEUMetric(BaseMetric):
 class BLEURTMetric(BaseMetric):
     def __init__(self, config_name: str = None) -> None:
         super().__init__()
-        self._metric = load_metric("bleurt", config_name=config_name)
+        self._metric = load("bleurt", config_name=config_name)
 
     def compute(
         self,
@@ -594,7 +594,7 @@ class SacreBLEUMetric(BaseMetric):
     def __init__(self, **args) -> None:
         super().__init__()
         self._args = args
-        self._metric = load_metric("sacrebleu")
+        self._metric = load("sacrebleu")
 
     def compute(
         self,
@@ -617,7 +617,7 @@ class SacreBLEUMetric(BaseMetric):
 class TERMetric(BaseMetric):
     def __init__(self) -> None:
         super().__init__()
-        self._metric = load_metric("ter")
+        self._metric = load("ter")
 
     def compute(
         self,
@@ -640,7 +640,7 @@ class TERMetric(BaseMetric):
 class chrFmetric(BaseMetric):
     def __init__(self) -> None:
         super().__init__()
-        self._metric = load_metric("chrf")
+        self._metric = load("chrf")
 
     def compute(
         self,

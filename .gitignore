@@ -134,3 +134,6 @@ dmypy.json
 .idea/
 cluster_utils/
 **/wandb/
+
+# RL4LM_exps
+rl4lm_exps/
