@@ -49,7 +49,8 @@ All of these building blocks can be customizable allowing users to train transfo
 ```bash
 git clone https://github.com/allenai/RL4LMs.git
 cd RL4LMs
-pip install -e .
+uv sync
+uv pip install -e .
 ```
 
 ## Docker
