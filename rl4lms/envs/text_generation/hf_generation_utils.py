@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from transformers.generation.utils import GenerationMixin
+from transformers import GenerationMixin
 import inspect
 import warnings
 from dataclasses import dataclass
@@ -416,8 +416,7 @@ class GenerationMixinWithRawScores:
         else:
             input_name = self.main_input_name
 
-        model_kwargs = {k: v for k, v in model_kwargs.items(
-        ) if v is not None or k != input_name}
+        model_kwargs = {k: v for k, v in model_kwargs.items() if v is not None or k != input_name}
 
         # 2. check whether model_input_name is passed as kwarg
         # if yes and `inputs` is None use kwarg inputs
@@ -529,8 +528,9 @@ class GenerationMixinWithRawScores:
         model_input_name = model_input_name if model_input_name is not None else self.main_input_name
         encoder_kwargs["return_dict"] = True
         encoder_kwargs[model_input_name] = inputs_tensor
-        model_kwargs["encoder_outputs"]: ModelOutput = encoder(
-            **encoder_kwargs)
+        if "input_ids" in encoder_kwargs:
+            encoder_kwargs["input_ids"] = encoder_kwargs["input_ids"].long()
+        model_kwargs["encoder_outputs"]: ModelOutput = encoder(**encoder_kwargs)
 
         return model_kwargs
 
@@ -707,6 +707,7 @@ class GenerationMixinWithRawScores:
         instances used to modify the scores of the language model head.
         """
         processors = LogitsProcessorList()
+        device = encoder_input_ids.device if encoder_input_ids is not None else torch.device("cpu")
 
         # init warp parameters
         repetition_penalty = repetition_penalty if repetition_penalty is not None else self.config.repetition_penalty
@@ -725,9 +726,7 @@ class GenerationMixinWithRawScores:
         forced_bos_token_id = (
             forced_bos_token_id if forced_bos_token_id is not None else self.config.forced_bos_token_id
         )
-        forced_eos_token_id = (
-            forced_eos_token_id if forced_eos_token_id is not None else self.config.forced_eos_token_id
-        )
+        forced_eos_token_id = (forced_eos_token_id if forced_eos_token_id is not None else self.config.forced_eos_token_id)
         remove_invalid_values = (
             remove_invalid_values if remove_invalid_values is not None else self.config.remove_invalid_values
         )
@@ -764,8 +763,7 @@ class GenerationMixinWithRawScores:
             processors.append(NoBadWordsLogitsProcessor(
                 bad_words_ids, eos_token_id))
         if min_length is not None and eos_token_id is not None and min_length > 0:
-            processors.append(MinLengthLogitsProcessor(
-                min_length, eos_token_id))
+            processors.append(MinLengthLogitsProcessor(min_length, eos_token_id, device=str(device)))
         if prefix_allowed_tokens_fn is not None:
             processors.append(PrefixConstrainedLogitsProcessor(
                 prefix_allowed_tokens_fn, num_beams // num_beam_groups))
@@ -861,7 +859,7 @@ class GenerationMixinWithRawScores:
                             for t in range(gen_steps)]
         return step_wise_logits
 
-    @ torch.no_grad()
+    @torch.no_grad()
     def generate(
         self,
         inputs: Optional[torch.Tensor] = None,
@@ -1906,8 +1904,7 @@ class GenerationMixinWithRawScores:
                 "`max_length` is deprecated in this function, use `stopping_criteria=StoppingCriteriaList(MaxLengthCriteria(max_length=max_length))` instead.",
                 UserWarning,
             )
-            stopping_criteria = validate_stopping_criteria(
-                stopping_criteria, max_length)
+            stopping_criteria = validate_stopping_criteria(stopping_criteria, max_length)
         logits_warper = logits_warper if logits_warper is not None else LogitsProcessorList()
         pad_token_id = pad_token_id if pad_token_id is not None else self.config.pad_token_id
         eos_token_id = eos_token_id if eos_token_id is not None else self.config.eos_token_id
@@ -1956,8 +1953,8 @@ class GenerationMixinWithRawScores:
                     break
 
             # prepare model inputs
-            model_inputs = self.prepare_inputs_for_generation(
-                input_ids, **model_kwargs)
+            model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+            model_inputs['decoder_input_ids'] = model_inputs.get('input_ids', None)
 
             # forward pass to get next token
             outputs = self(
@@ -1965,20 +1962,19 @@ class GenerationMixinWithRawScores:
                 return_dict=True,
                 output_attentions=output_attentions,
                 output_hidden_states=output_hidden_states,
-            )
+            )  # type: ignore -- self becomes the transformer's model
 
             if synced_gpus and this_peer_finished:
                 cur_len = cur_len + 1
                 continue  # don't waste resources running the code we don't need
 
-            next_token_logits_raw = outputs.logits[:, -1, :].clone()
-            next_token_logits = outputs.logits[:, -1, :]
+            next_token_logits_raw = outputs.logits[:, -1, :].detach().to(copy=True, dtype=torch.float32)
+            next_token_logits = outputs.logits[:, -1, :].float()
 
             # pre-process distribution
-            next_token_scores = logits_processor(
-                input_ids, next_token_logits, model_inputs=model_inputs)
-            next_token_scores = logits_warper(
-                input_ids, next_token_scores)
+            next_token_scores = logits_processor(input_ids, next_token_logits, model_inputs=model_inputs)
+
+            next_token_scores = logits_warper(input_ids, next_token_scores)
 
             # Store scores, attentions and hidden_states when required
             if return_dict_in_generate:

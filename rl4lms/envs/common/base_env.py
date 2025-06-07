@@ -4,7 +4,7 @@ from rl4lms.envs.common.observation import BaseObservation, BaseObservationFeatu
 from rl4lms.envs.common.reward import RewardFunction
 from rl4lms.data_pools.base import Sample
 from rl4lms.envs.common.action_space import ActionSpace
-from gym import spaces
+from gymnasium import spaces
 import gym
 import numpy as np
 

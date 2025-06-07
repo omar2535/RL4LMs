@@ -3,12 +3,12 @@ name = "rl4lms"
 version = "0.1.0"
 description = "RL4LMs: Reinforcement Learning for Language Models"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
     "bert-score>=0.3.13",
     "datasets>=3.4.1",
-    "gem-metrics>=0.2.0",
-    "gym>=0.26.2",
+    "gem-metrics",
+    "gymnasium>=1.1.1",
     "importlib-metadata>=8.6.1",
     "jsonlines>=4.0.0",
     "py-rouge>=1.1",
@@ -17,10 +17,13 @@ dependencies = [
     "six>=1.17.0",
     "spacy>=3.8.4",
     "stable-baselines3>=2.6.0",
-    "transformers",
+    "transformers>=4.36",
     "wandb>=0.19.11",
+    "torch==2.5.0"
 ]
 
 [tool.uv.sources]
-gem-metrics = { git = "https://github.com/omar2535/GEM-metrics" }
-transformers = { git = "https://github.com/huggingface/transformers" }
+gem-metrics = { git = "https://github.com/omar2535/GEM-metrics" , branch = "main" }
+
+[tool.setuptools]
+py-modules = ['rl4lms']

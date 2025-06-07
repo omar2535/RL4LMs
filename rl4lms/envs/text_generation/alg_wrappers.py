@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from stable_baselines3.common.buffers import DictRolloutBuffer, RolloutBuffer
 from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.on_policy_algorithm import OnPolicyAlgorithm
 from stable_baselines3.common.utils import obs_as_tensor
 from stable_baselines3.common.type_aliases import TensorDict
@@ -88,7 +89,7 @@ def compute_batched_rewards(
 
 
 def wrap_onpolicy_alg(
-    alg_class: Type[OnPolicyAlgorithm],
+    alg_class: Type[OnPolicyAlgorithm] | Type[OffPolicyAlgorithm],
     alg_kwargs: Dict[str, Any],
     kl_coeff: float,
     tracker: Tracker,

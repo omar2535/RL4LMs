@@ -27,7 +27,7 @@ def evaluate_on_samples(
     metrics: List[BaseMetric],
     epoch: int,
     split_name: str,
-    tracker: Tracker = None,
+    tracker: Tracker,
     dt_control_token: str = "",
     gen_kwargs: Dict[str, Any] = None,
 ):
@@ -38,9 +38,7 @@ def evaluate_on_samples(
     all_meta_infos = []
     n_samples = len(samples)
     for batch in tqdm(list(get_batch(samples, batch_size)), desc="Evaluating"):
-        batch_generated_texts = generate_text(
-            policy, tokenizer, batch, max_prompt_length, dt_control_token, gen_kwargs
-        )
+        batch_generated_texts = generate_text(policy, tokenizer, batch, max_prompt_length, dt_control_token, gen_kwargs)
         batch_ref_texts = [sample.references for sample in batch]
         batch_prompt_texts = [sample.prompt_or_input_text for sample in batch]
         batch_meta_infos = [sample.meta_data for sample in batch]
@@ -105,10 +103,7 @@ def generate_text(
     dt_control_token: str,
     gen_kwargs: Dict[str, Any],
 ):
-    prompt_texts = [
-        dt_control_token + sample.prompt_or_input_text for sample in samples
-    ]
-    generated_texts = policy.generate(
-        tokenizer, prompt_texts, max_prompt_length, gen_kwargs=gen_kwargs
-    ).gen_texts
+    prompt_texts = [dt_control_token + sample.prompt_or_input_text for sample in samples]
+    generated_texts = policy.generate(tokenizer, prompt_texts, max_prompt_length, gen_kwargs=gen_kwargs).gen_texts
+    breakpoint() # TODO: remove this line -- THIS DOESN"T HIT
     return generated_texts

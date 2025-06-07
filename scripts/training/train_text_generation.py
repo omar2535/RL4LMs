@@ -52,6 +52,7 @@ def main(
             train_eval_config=config["train_evaluation"],
             tracker=tracker,
         )
+    print("Starting training and evaluation...")
     trainer.train_and_eval()
 
 

@@ -94,7 +94,7 @@ class TrainerWarmStartMixin:
     def _get_recent_ckpt_path(self, tracker: Tracker):
         try:
             checkpoints = os.listdir(tracker.checkpoint_base_path)
-        except:
+        except Exception:
             os.makedirs(tracker.checkpoint_base_path)
             checkpoints = os.listdir(tracker.checkpoint_base_path)
 
@@ -113,17 +113,16 @@ class TrainerWarmStartMixin:
     def load_trainer_state(self, tracker: Tracker):
         recent_ckpt_path, _ = self._get_recent_ckpt_path(tracker)
         state_dict = None
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         try:
             if recent_ckpt_path is not None:
-                state_dict = torch.load(
-                    recent_ckpt_path, map_location=torch.device("cuda"))
+                state_dict = torch.load(recent_ckpt_path, map_location=device, device=device)
                 tracker.log_info("Model checkpoint found - Warm starting")
                 self._policy_state_dict = state_dict["policy_state"]
                 self._alg_state_dict = state_dict["alg_state"]
                 self._trainer_state = state_dict["trainer_state"]
 
-                tracker.log_info(
-                    f"Loaded the current trainer state from: {self._trainer_state}")
+                tracker.log_info(f"Loaded the current trainer state from: {self._trainer_state}")
             else:
                 self._policy_state_dict = None
                 self._alg_state_dict = None
@@ -132,8 +131,7 @@ class TrainerWarmStartMixin:
                 }
         except Exception as e:
             tracker.log_info(f"Exception while doing warm start {e}")
-            tracker.log_info(
-                f"Checkpoint may be corrupted...skipping warm start")
+            tracker.log_info("Checkpoint may be corrupted...skipping warm start")
             self._policy_state_dict = None
             self._alg_state_dict = None
             self._trainer_state = {

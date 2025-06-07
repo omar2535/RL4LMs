@@ -5,8 +5,8 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import torch
-from gym.spaces import Discrete
-from gym.spaces.dict import Dict as DictSpace
+from gymnasium.spaces import Discrete
+from gymnasium.spaces.dict import Dict as DictSpace
 from stable_baselines3.common.distributions import CategoricalDistribution
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import Schedule, TensorDict
@@ -184,7 +184,6 @@ class LMActorCriticPolicy(BasePolicy):
         attention_mask: torch.tensor = None,
         gen_kwargs: Dict[str, Any] = None,
     ) -> GenerationOutputs:
-
         # if it different from rollout gen kwargs
         if gen_kwargs is None:
             gen_kwargs = self._generation_kwargs
@@ -199,8 +198,10 @@ class LMActorCriticPolicy(BasePolicy):
             and max_prompt_length is not None
         ):
             # override truncation side for prompt
-            prev_truncation_side = tokenizer.truncation_side
-            tokenizer.truncation_side = self._prompt_truncation_side
+            prev_truncation_side = getattr(tokenizer, "truncation_side", None)
+            if prev_truncation_side is not None:
+                setattr(tokenizer, "truncation_side", self._prompt_truncation_side)
+
             encodings = tokenizer(
                 texts,
                 padding="max_length",
@@ -208,10 +209,11 @@ class LMActorCriticPolicy(BasePolicy):
                 return_tensors="pt",
                 return_attention_mask=True,
                 truncation=True,
-            )
+            ).to(self.get_policy_first_device())  # type: ignore
+
             input_ids = encodings.input_ids
             attention_mask = encodings.attention_mask
-            tokenizer.truncation_side = prev_truncation_side
+            setattr(tokenizer, "truncation_side", prev_truncation_side)
 
         # if min_length argument is set and if policy is not a seq2seq LM (ie. causal LM)
         # then it has to be adjusted to input_size + min_length
@@ -225,6 +227,7 @@ class LMActorCriticPolicy(BasePolicy):
         else:
             generation_kwargs_ = gen_kwargs
 
+        # breakpoint()
         # generate
         gen_output = unwrap_model(self._policy_model).generate(
             inputs=input_ids.to(self.get_policy_first_device()),
@@ -234,11 +237,14 @@ class LMActorCriticPolicy(BasePolicy):
             **generation_kwargs_,
         )
 
+        breakpoint() # TODO: remove this line -- THIS DOESN"T HIT
         # number of tokens generated
         seq_length = len(gen_output["scores"])
 
         # get only the generated text (excluding prompt)
         gen_tokens = gen_output["sequences"][:, -seq_length:]
+
+        breakpoint()
 
         # to texts
         gen_texts = [
