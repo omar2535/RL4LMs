@@ -105,5 +105,4 @@ def generate_text(
 ):
     prompt_texts = [dt_control_token + sample.prompt_or_input_text for sample in samples]
     generated_texts = policy.generate(tokenizer, prompt_texts, max_prompt_length, gen_kwargs=gen_kwargs).gen_texts
-    breakpoint() # TODO: remove this line -- THIS DOESN"T HIT
     return generated_texts

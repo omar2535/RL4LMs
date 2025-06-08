@@ -205,8 +205,6 @@ class OnPolicyTrainer(TrainerWarmStartMixin):
         iter_start = self._trainer_state["current_iter"]
         self._evaluate_on_datapools(epoch=iter_start)
 
-        breakpoint()  # TODO: REMOVE THIS -- DOESN't HIT
-
         # train for given number of iters
         for epoch in range(iter_start, self._n_iters):
             # current state

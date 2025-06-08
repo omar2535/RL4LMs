@@ -2020,7 +2020,9 @@ class GenerationMixinWithRawScores:
                     (next_tokens != eos_token_id).long())
 
             # stop when each sentence is finished, or if we exceed the maximum length
-            if unfinished_sequences.max() == 0 or stopping_criteria(input_ids, scores):
+            should_stop_tensor = stopping_criteria(input_ids, scores)
+            any_sequence_should_stop = torch.any(should_stop_tensor).item()
+            if unfinished_sequences.max() == 0 or any_sequence_should_stop:
                 if not synced_gpus:
                     break
                 else:

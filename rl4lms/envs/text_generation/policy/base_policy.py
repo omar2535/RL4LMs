@@ -227,7 +227,6 @@ class LMActorCriticPolicy(BasePolicy):
         else:
             generation_kwargs_ = gen_kwargs
 
-        # breakpoint()
         # generate
         gen_output = unwrap_model(self._policy_model).generate(
             inputs=input_ids.to(self.get_policy_first_device()),
@@ -237,14 +236,11 @@ class LMActorCriticPolicy(BasePolicy):
             **generation_kwargs_,
         )
 
-        breakpoint() # TODO: remove this line -- THIS DOESN"T HIT
         # number of tokens generated
         seq_length = len(gen_output["scores"])
 
         # get only the generated text (excluding prompt)
         gen_tokens = gen_output["sequences"][:, -seq_length:]
-
-        breakpoint()
 
         # to texts
         gen_texts = [
