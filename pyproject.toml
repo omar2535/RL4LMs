@@ -19,7 +19,7 @@ dependencies = [
     "stable-baselines3>=2.6.0",
     "transformers>=4.36",
     "wandb>=0.19.11",
-    "torch==2.5.0"
+    "torch>=2.5.0"
 ]
 
 [tool.uv.sources]
